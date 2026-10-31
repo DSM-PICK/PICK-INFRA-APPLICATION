@@ -1,0 +1,80 @@
+# Namespace
+# 비워두면 ArgoCD destination namespace(.Release.Namespace)를 사용
+namespace: ""
+
+
+# Deployments
+deployments:
+  - name: admin
+    replicas: 1
+
+    image:
+      repository: nginx
+      tag: latest
+      pullPolicy: IfNotPresent
+
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+
+    # hosts가 비어 있으면 IngressRoute를 생성하지 않음
+    ingress:
+      entryPoints:
+        - web
+      hosts: []
+      # - admin.example.com
+
+    # name이 비어 있으면 secretRef를 주입하지 않음
+    secret:
+      name: ""
+
+  - name: user
+    replicas: 1
+
+    image:
+      repository: nginx
+      tag: latest
+      pullPolicy: IfNotPresent
+
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+
+    ingress:
+      entryPoints:
+        - web
+      hosts: []
+      # - user.example.com
+
+    secret:
+      name: ""
+
+
+# Addons
+# type: mysql | redis | kafka
+# storage는 문자열(ex. 10Gi) 또는 아래처럼 객체로 지정 가능
+addons: []
+#  - type: mysql
+#    name: mysql
+#    database: app
+#    username: app
+#    secretName: mysql-secret
+#    image:
+#      repository: mysql
+#      tag: "8.4"
+#    storage:
+#      size: 10Gi
+#
+#  - type: redis
+#    name: redis
+#    image:
+#      repository: redis
+#      tag: "7-alpine"
+#    storage:
+#      size: 5Gi
+#
+#  - type: kafka
+#    name: kafka
+#    storage: 10Gi

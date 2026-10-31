@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: {{ include "app.name" . }}-allow-same-namespace
+  namespace: {{ include "project.namespace" . }}
+
+spec:
+  podSelector: {}
+
+  policyTypes:
+    - Ingress
+
+  ingress:
+    # 같은 Namespace의 모든 Pod 허용
+    - from:
+        - podSelector: {}
+
+    # kube-system 허용
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system

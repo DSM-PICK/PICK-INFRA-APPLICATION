@@ -1,0 +1,26 @@
+{{- range .Values.deployments }}
+{{- $name := default (include "app.name" $) .name | trunc 63 | trimSuffix "-" }}
+{{- $service := default (dict) .service }}
+{{- $port := default 80 $service.port }}
+{{- $targetPort := default $port $service.targetPort }}
+---
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: {{ $name }}
+  namespace: {{ include "project.namespace" $ }}
+
+  labels:
+    app: {{ $name }}
+
+spec:
+  selector:
+    app: {{ $name }}
+
+  ports:
+    - port: {{ $port }}
+      targetPort: {{ $targetPort }}
+
+  type: {{ default "ClusterIP" $service.type }}
+{{- end }}

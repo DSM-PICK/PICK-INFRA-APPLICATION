@@ -1,0 +1,45 @@
+{{- range .Values.deployments }}
+{{- $name := default (include "app.name" $) .name | trunc 63 | trimSuffix "-" }}
+{{- $image := default (dict) .image }}
+{{- $service := default (dict) .service }}
+{{- $port := default 80 $service.port }}
+{{- $secret := default (dict) .secret }}
+---
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: {{ $name }}
+  namespace: {{ include "project.namespace" $ }}
+
+  labels:
+    app: {{ $name }}
+
+spec:
+  replicas: {{ default 1 .replicas }}
+
+  selector:
+    matchLabels:
+      app: {{ $name }}
+
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+
+    spec:
+      containers:
+        - name: {{ $name }}
+
+          image: "{{ default "nginx" $image.repository }}:{{ default "latest" $image.tag }}"
+          imagePullPolicy: {{ default "IfNotPresent" $image.pullPolicy }}
+
+          ports:
+            - containerPort: {{ default $port $service.targetPort }}
+
+          {{- if $secret.name }}
+          envFrom:
+            - secretRef:
+                name: {{ $secret.name }}
+          {{- end }}
+{{- end }}

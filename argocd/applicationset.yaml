@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+
+metadata:
+  name: applications
+  namespace: argocd
+
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/DSM-PICK/PICK-INFRA-APPLICATION.git
+        revision: HEAD
+
+        files:
+          - path: "apps/*/values.yaml"
+
+  template:
+    metadata:
+      name: '{{path.basename}}'
+
+    spec:
+      project: default
+
+      sources:
+
+        # 공통 Helm Chart
+        - repoURL: https://github.com/DSM-PICK/PICK-INFRA-APPLICATION.git
+          targetRevision: HEAD
+          path: charts/app
+
+          helm:
+            valueFiles:
+              - '$values/{{path}}/values.yaml'
+              
+        # 앱별 values.yaml
+        - repoURL: https://github.com/DSM-PICK/PICK-INFRA-APPLICATION.git
+          targetRevision: HEAD
+          ref: values
+
+      destination:
+        server: https://kubernetes.default.svc
+        # apps/<app>/values.yaml 의 namespace 값을 사용
+        namespace: '{{namespace}}'
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
