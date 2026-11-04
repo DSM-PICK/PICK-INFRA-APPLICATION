@@ -4,6 +4,7 @@
 {{- $service := default (dict) .service }}
 {{- $port := default 80 $service.port }}
 {{- $secret := default (dict) .secret }}
+{{- $pullSecrets := default $.Values.imagePullSecrets .imagePullSecrets }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -28,6 +29,10 @@ spec:
         app: {{ $name }}
 
     spec:
+      {{- with $pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: {{ $name }}
 

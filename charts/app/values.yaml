@@ -2,6 +2,10 @@
 # 비워두면 ArgoCD destination namespace(.Release.Namespace)를 사용
 namespace: ""
 
+# 모든 Deployment에 적용할 imagePullSecrets (deployment별로 덮어쓸 수 있음)
+imagePullSecrets: []
+#  - name: registry-pull-secret
+
 
 # Deployments
 deployments:
