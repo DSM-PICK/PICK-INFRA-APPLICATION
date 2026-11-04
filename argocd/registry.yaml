@@ -42,20 +42,11 @@ spec:
           env:
             - name: REGISTRY_HTTP_RELATIVEURLS
               value: "true"
-            - name: REGISTRY_AUTH
-              value: htpasswd
-            - name: REGISTRY_AUTH_HTPASSWD_REALM
-              value: "Registry Realm"
-            - name: REGISTRY_AUTH_HTPASSWD_PATH
-              value: /auth/htpasswd
             - name: REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY
               value: /var/lib/registry
           volumeMounts:
             - name: registry-data
               mountPath: /var/lib/registry
-            - name: registry-auth
-              mountPath: /auth
-              readOnly: true
           readinessProbe:
             tcpSocket:
               port: 5000
@@ -71,9 +62,6 @@ spec:
         - name: registry-data
           persistentVolumeClaim:
             claimName: registry-data
-        - name: registry-auth
-          secret:
-            secretName: registry-auth
 ---
 apiVersion: v1
 kind: Service
@@ -91,6 +79,16 @@ spec:
       protocol: TCP
 ---
 apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: registry-push-auth
+  namespace: registry
+spec:
+  basicAuth:
+    secret: registry-auth-users
+    realm: "Registry Push"
+---
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: registry
@@ -99,8 +97,34 @@ spec:
   entryPoints:
     - web
   routes:
+    # pull (GET/HEAD) - 인증 없이 허용
     - kind: Rule
-      match: Host(`registry-pick.dsmhs.kr`)
+      match: "Host(`registry-pick.dsmhs.kr`) && (Method(`GET`) || Method(`HEAD`))"
       services:
         - name: registry
+          port: 5000
+    # push 등 쓰기 요청 - BasicAuth 필요
+    - kind: Rule
+      match: "Host(`registry-pick.dsmhs.kr`) && !Method(`GET`) && !Method(`HEAD`)"
+      middlewares:
+        - name: registry-push-auth
+      services:
+        - name: registry
+          port: 5000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: registry-allow
+  namespace: registry
+spec:
+  podSelector:
+    matchLabels:
+      app: registry
+  policyTypes:
+    - Ingress
+  ingress:
+    # Traefik 및 클러스터 내부(노드 image pull 포함)에서 registry:5000 접근 허용
+    - ports:
+        - protocol: TCP
           port: 5000

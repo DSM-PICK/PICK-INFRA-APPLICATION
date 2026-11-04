@@ -138,6 +138,77 @@ secret:
   name: api-secret
 ```
 
+### 사설 Registry / ImagePullSecrets
+
+`argocd/registry.yaml`의 registry는 인증 없이 pull할 수 있도록 설정되어 있습니다.
+
+```yaml
+image:
+  repository: registry-pick.dsmhs.kr/test/nginx
+  tag: latest
+```
+
+따라서 이 registry를 사용하는 Deployment에는 `imagePullSecrets`가 필요 없습니다.
+
+다른 private registry를 사용할 때만 `imagePullSecrets`를 지정합니다.
+
+```yaml
+deployments:
+  - name: web
+    image:
+      repository: registry.example.com/team/app
+      tag: latest
+    imagePullSecrets:
+      - name: registry-pull-secret
+```
+
+전체 Deployment에 공통 적용하려면 values 최상단에 설정할 수 있습니다.
+
+```yaml
+imagePullSecrets:
+  - name: registry-pull-secret
+```
+
+Registry 인증 Secret은 namespace마다 별도로 존재해야 합니다. (`registry` namespace의 Secret을 다른 namespace에서 참조할 수 없음)
+
+```bash
+kubectl -n example create secret docker-registry registry-pull-secret \
+  --docker-server=registry.example.com \
+  --docker-username=<username> \
+  --docker-password=<password>
+```
+
+- Secret 평문은 Git에 커밋하지 않습니다.
+- GitOps로 관리하려면 Sealed Secrets 또는 External Secrets 사용을 권장합니다.
+- image pull은 kubelet이 수행하므로 Pod NetworkPolicy의 영향을 받지 않습니다.
+- 클러스터 내부에서 registry API에 직접 접근할 때는 egress 정책도 확인해야 합니다.
+- `argocd/registry.yaml`에는 registry의 5000 포트 ingress를 허용하는 NetworkPolicy가 포함되어 있습니다.
+
+#### Push 인증
+
+`argocd/registry.yaml`의 Traefik 설정은 **GET/HEAD(pull)는 인증 없이**, **그 외 쓰기 요청(push)은 BasicAuth**로 처리합니다.
+
+Traefik BasicAuth는 `users` 키를 가진 Secret을 필요로 합니다. 기존 `registry-auth` Secret의 htpasswd 내용을 그대로 사용해 생성합니다.
+
+```bash
+kubectl -n registry get secret registry-auth \
+  -o jsonpath='{.data.htpasswd}' | base64 -d > /tmp/registry-users
+
+kubectl -n registry create secret generic registry-auth-users \
+  --from-file=users=/tmp/registry-users
+```
+
+`docker login` 후 평소처럼 push하면 됩니다.
+
+```bash
+docker login registry-pick.dsmhs.kr
+docker push registry-pick.dsmhs.kr/test/nginx:latest
+```
+
+> 클러스터 내부에서 `registry.registry.svc.cluster.local:5000`으로 직접 접근하면 Traefik을 거치지 않으므로 push 인증이 적용되지 않습니다.
+
+예시 앱은 `apps/example/values.yaml`에 있습니다.
+
 ## Addon 설정
 
 `addons`는 리스트이며 `type`으로 종류를 구분합니다.
