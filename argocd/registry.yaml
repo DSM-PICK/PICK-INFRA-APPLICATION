@@ -40,6 +40,8 @@ spec:
               containerPort: 5000
               protocol: TCP
           env:
+            - name: REGISTRY_HTTP_RELATIVEURLS
+              value: "true"
             - name: REGISTRY_AUTH
               value: htpasswd
             - name: REGISTRY_AUTH_HTPASSWD_REALM
