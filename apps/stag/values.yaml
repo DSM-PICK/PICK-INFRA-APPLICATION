@@ -1,0 +1,86 @@
+namespace: pick-dsm-project
+
+deployments:
+  - name: pick-core-stag
+    replicas: 1
+
+    image:
+      repository: registry-pick.dsmhs.kr/pick-core-stag
+      tag: latest
+      pullPolicy: Always
+
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+
+    ingress:
+      entryPoints:
+        - web
+      hosts:
+        - pick-core-stag.dsmhs.kr
+
+    secret:
+      name: ""
+
+  - name: pick-admin-stag
+    replicas: 1
+
+    image:
+      repository: registry-pick.dsmhs.kr/pick-admin-stag
+      tag: latest
+      pullPolicy: Always
+
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+
+    ingress:
+      entryPoints:
+        - web
+      hosts:
+        - pick-admin-stag.dsmhs.kr
+
+    secret:
+      name: ""
+
+  - name: pick-teacher-stag
+    replicas: 1
+
+    image:
+      repository: registry-pick.dsmhs.kr/pick-teacher-stag
+      tag: latest
+      pullPolicy: Always
+
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+
+    ingress:
+      entryPoints:
+        - web
+      hosts:
+        - pick-teacher-stag.dsmhs.kr
+
+    secret:
+      name: ""
+
+addons:
+  - type: redis
+    name: pick-redis-stag
+    storage: 1Gi
+
+  - type: mysql
+    name: pick-pick-core-stag-mysql
+    storage: 1Gi
+
+  - type: kafka
+    name: pick-kafka-stag
+    storage: 2Gi
+
+  - type: debezium
+    name: pick-debezium-stag
+    storage: 5Gi
+    bootstrap: pick-kafka-stag:9092
