@@ -68,16 +68,6 @@ app.kubernetes.io/instance: {{ include "addon.name" . }}
 
 
 {{/*
-Addon storage class
-*/}}
-{{- define "addon.storageClassName" -}}
-{{- if kindIs "map" .storage -}}
-{{- .storage.storageClassName -}}
-{{- end -}}
-{{- end }}
-
-
-{{/*
 Addon storage size
 */}}
 {{- define "addon.storageSize" -}}

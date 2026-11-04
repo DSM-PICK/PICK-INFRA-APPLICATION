@@ -39,8 +39,8 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  {{- with (include "addon.storageClassName" .) }}
-  storageClassName: {{ . }}
+  {{- if and (kindIs "map" .storage) .storage.storageClassName }}
+  storageClassName: {{ .storage.storageClassName }}
   {{- end }}
 
   resources:
