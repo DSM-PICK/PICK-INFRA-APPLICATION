@@ -55,14 +55,13 @@ spec:
               mountPath: /auth
               readOnly: true
           readinessProbe:
-            httpGet:
-              path: /v2/
+            tcpSocket:
               port: 5000
             initialDelaySeconds: 5
             periodSeconds: 10
+
           livenessProbe:
-            httpGet:
-              path: /v2/
+            tcpSocket:
               port: 5000
             initialDelaySeconds: 10
             periodSeconds: 20
