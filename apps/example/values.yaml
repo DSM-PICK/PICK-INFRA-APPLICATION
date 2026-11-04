@@ -5,7 +5,7 @@ deployments:
     replicas: 1
 
     image:
-      repository: registry.registry.svc.cluster.local:5000/test/nginx
+      repository: registry-pick.dsmhs.kr/test/nginx
       tag: latest
       pullPolicy: IfNotPresent
 
