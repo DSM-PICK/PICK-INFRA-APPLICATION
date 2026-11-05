@@ -1,87 +1,68 @@
 namespace: pick-stag
-
 deployments:
   - name: pick-core-stag
     replicas: 1
-
     image:
       repository: sungjujjang/pick-core-stag
-      tag: latest
+      tag: c6a9d14f1ca168791d23e7f72fcfc1a8d33cb488
       pullPolicy: Always
-
     service:
       type: ClusterIP
       port: 80
       targetPort: 8080
-
     ingress:
       entryPoints:
         - web
       hosts:
         - pick-core-stag.dsmhs.kr
-
     secret:
       name: pick-pick-core-stag
-
   - name: pick-admin-stag
     replicas: 1
-
     image:
       repository: sungjujjang/pick-admin-stag
       tag: latest
       pullPolicy: Always
-
     service:
       type: ClusterIP
       port: 80
       targetPort: 8080
-
     ingress:
       entryPoints:
         - web
       hosts:
         - pick-admin-stag.dsmhs.kr
-
     secret:
       name: ""
-
   - name: pick-teacher-stag
     replicas: 1
-
     image:
       repository: sungjujjang/pick-teacher-stag
       tag: latest
       pullPolicy: Always
-
     service:
       type: ClusterIP
       port: 80
       targetPort: 8080
-
     ingress:
       entryPoints:
         - web
       hosts:
         - pick-teacher-stag.dsmhs.kr
-
     secret:
       name: ""
-
 addons:
   - type: redis
     name: pick-redis-stag
     storage: 1Gi
-
   - type: mysql
     name: pick-pick-core-stag-mysql
     database: pick_pick_core_stag_mysql
     secretName: pick-pick-core-stag-mysql-secret
     storage: 1Gi
-
   - type: kafka
     name: pick-kafka-stag
     storage: 2Gi
-
   - type: debezium
     name: pick-debezium-stag
     storage: 5Gi
