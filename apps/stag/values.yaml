@@ -1,4 +1,4 @@
-namespace: pick-dsm-project
+namespace: pick-stag
 
 deployments:
   - name: pick-core-stag
