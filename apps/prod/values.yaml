@@ -21,7 +21,7 @@ deployments:
     replicas: 1
     image:
       repository: sungjujjang/pick-admin-prod
-      tag: latest
+      tag: 8fd3d90608d4f7d48b67541fe8a83655f3b3b4e5
       pullPolicy: Always
     service:
       type: ClusterIP
