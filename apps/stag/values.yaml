@@ -38,7 +38,7 @@ deployments:
     replicas: 1
     image:
       repository: sungjujjang/pick-teacher-stag
-      tag: latest
+      tag: 691f22cbe10f05f96aff654496cda6d9b8784c15
       pullPolicy: Always
     service:
       type: ClusterIP
