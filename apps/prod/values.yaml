@@ -4,7 +4,7 @@ deployments:
     replicas: 1
     image:
       repository: sungjujjang/pick-core-prod
-      tag: latest
+      tag: edf126d75671bc4e94051ffac0831e17ae8b559c
       pullPolicy: Always
     service:
       type: ClusterIP
