@@ -38,7 +38,7 @@ deployments:
     replicas: 1
     image:
       repository: sungjujjang/pick-teacher-prod
-      tag: latest
+      tag: 8d9c4d5f52c226b30393d5a49d25783d676487fb
       pullPolicy: Always
     service:
       type: ClusterIP
