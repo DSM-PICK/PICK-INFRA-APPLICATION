@@ -1,0 +1,69 @@
+namespace: pick-prod
+deployments:
+  - name: pick-core-prod
+    replicas: 1
+    image:
+      repository: sungjujjang/pick-core-prod
+      tag: latest
+      pullPolicy: Always
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+    ingress:
+      entryPoints:
+        - web
+      hosts:
+        - pick-core.dsmhs.kr
+    secret:
+      name: pick-pick-core-prod
+  - name: pick-admin-prod
+    replicas: 1
+    image:
+      repository: sungjujjang/pick-admin-prod
+      tag: latest
+      pullPolicy: Always
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+    ingress:
+      entryPoints:
+        - web
+      hosts:
+        - pick-admin.dsmhs.kr
+    secret:
+      name: ""
+  - name: pick-teacher-prod
+    replicas: 1
+    image:
+      repository: sungjujjang/pick-teacher-prod
+      tag: latest
+      pullPolicy: Always
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+    ingress:
+      entryPoints:
+        - web
+      hosts:
+        - pick-teacher.dsmhs.kr
+    secret:
+      name: ""
+addons:
+  - type: redis
+    name: pick-redis-prod
+    storage: 1Gi
+  - type: mysql
+    name: pick-pick-core-prod-mysql
+    database: pick_pick_core_prod_mysql
+    secretName: pick-pick-core-prod-mysql-secret
+    storage: 1Gi
+  - type: kafka
+    name: pick-kafka-prod
+    storage: 2Gi
+  - type: debezium
+    name: pick-debezium-prod
+    storage: 5Gi
+    bootstrap: pick-kafka-prod:9092
