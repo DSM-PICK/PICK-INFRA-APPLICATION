@@ -198,5 +198,111 @@ data:
       "uid": "workload-logs",
       "version": 1
     }
+  namespace-workload-logs.json: |-
+    {
+      "annotations": {"list": []},
+      "editable": true,
+      "graphTooltip": 1,
+      "panels": [
+        {
+          "datasource": {"type": "loki", "uid": "P8E80F9AEF21F6940"},
+          "gridPos": {"h": 12, "w": 12, "x": 0, "y": 0},
+          "id": 1,
+          "options": {"deduplication": "none", "enableLogDetails": true, "showCommonLabels": false, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLines": false},
+          "targets": [{"expr": "{namespace=\"pick-prod\",component=\"core\"}", "queryType": "range", "refId": "A"}],
+          "title": "PROD · CORE",
+          "type": "logs"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "P8E80F9AEF21F6940"},
+          "gridPos": {"h": 12, "w": 12, "x": 12, "y": 0},
+          "id": 2,
+          "options": {"deduplication": "none", "enableLogDetails": true, "showCommonLabels": false, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLines": false},
+          "targets": [{"expr": "{namespace=\"pick-prod\",component=\"admin\"}", "queryType": "range", "refId": "A"}],
+          "title": "PROD · ADMIN",
+          "type": "logs"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "P8E80F9AEF21F6940"},
+          "gridPos": {"h": 12, "w": 12, "x": 0, "y": 12},
+          "id": 3,
+          "options": {"deduplication": "none", "enableLogDetails": true, "showCommonLabels": false, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLines": false},
+          "targets": [{"expr": "{namespace=\"pick-prod\",component=\"kafka\"}", "queryType": "range", "refId": "A"}],
+          "title": "PROD · KAFKA",
+          "type": "logs"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "P8E80F9AEF21F6940"},
+          "gridPos": {"h": 12, "w": 12, "x": 12, "y": 12},
+          "id": 4,
+          "options": {"deduplication": "none", "enableLogDetails": true, "showCommonLabels": false, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLines": false},
+          "targets": [{"expr": "{namespace=\"pick-prod\",component=\"redis\"}", "queryType": "range", "refId": "A"}],
+          "title": "PROD · REDIS",
+          "type": "logs"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "P8E80F9AEF21F6940"},
+          "gridPos": {"h": 12, "w": 12, "x": 0, "y": 24},
+          "id": 5,
+          "options": {"deduplication": "none", "enableLogDetails": true, "showCommonLabels": false, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLines": false},
+          "targets": [{"expr": "{namespace=\"pick-stag\",component=\"core\"}", "queryType": "range", "refId": "A"}],
+          "title": "STAG · CORE",
+          "type": "logs"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "P8E80F9AEF21F6940"},
+          "gridPos": {"h": 12, "w": 12, "x": 12, "y": 24},
+          "id": 6,
+          "options": {"deduplication": "none", "enableLogDetails": true, "showCommonLabels": false, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLines": false},
+          "targets": [{"expr": "{namespace=\"pick-stag\",component=\"admin\"}", "queryType": "range", "refId": "A"}],
+          "title": "STAG · ADMIN",
+          "type": "logs"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "P8E80F9AEF21F6940"},
+          "gridPos": {"h": 12, "w": 12, "x": 0, "y": 36},
+          "id": 7,
+          "options": {"deduplication": "none", "enableLogDetails": true, "showCommonLabels": false, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLines": false},
+          "targets": [{"expr": "{namespace=\"pick-stag\",component=\"kafka\"}", "queryType": "range", "refId": "A"}],
+          "title": "STAG · KAFKA",
+          "type": "logs"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "P8E80F9AEF21F6940"},
+          "gridPos": {"h": 12, "w": 12, "x": 12, "y": 36},
+          "id": 8,
+          "options": {"deduplication": "none", "enableLogDetails": true, "showCommonLabels": false, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLines": false},
+          "targets": [{"expr": "{namespace=\"pick-stag\",component=\"redis\"}", "queryType": "range", "refId": "A"}],
+          "title": "STAG · REDIS",
+          "type": "logs"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "P8E80F9AEF21F6940"},
+          "gridPos": {"h": 12, "w": 12, "x": 0, "y": 48},
+          "id": 9,
+          "options": {"deduplication": "none", "enableLogDetails": true, "showCommonLabels": false, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLines": false},
+          "targets": [{"expr": "{namespace=\"pick-prod\",component=\"debezium\"}", "queryType": "range", "refId": "A"}],
+          "title": "PROD · DEBEZIUM",
+          "type": "logs"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "P8E80F9AEF21F6940"},
+          "gridPos": {"h": 12, "w": 12, "x": 12, "y": 48},
+          "id": 10,
+          "options": {"deduplication": "none", "enableLogDetails": true, "showCommonLabels": false, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLines": false},
+          "targets": [{"expr": "{namespace=\"pick-stag\",component=\"debezium\"}", "queryType": "range", "refId": "A"}],
+          "title": "STAG · DEBEZIUM",
+          "type": "logs"
+        }
+      ],
+      "refresh": "10s",
+      "schemaVersion": 42,
+      "tags": ["pick", "namespace", "logs", "prod", "stag"],
+      "time": {"from": "now-1h", "to": "now"},
+      "timezone": "browser",
+      "title": "Namespace Workload Logs",
+      "uid": "namespace-workload-logs",
+      "version": 1
+    }
 {{- end }}
 {{- end }}
