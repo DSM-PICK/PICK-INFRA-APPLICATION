@@ -44,7 +44,7 @@ data:
         {
           "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
           "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
-          "gridPos": {"h": 5, "w": 6, "x": 0, "y": 0},
+          "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0},
           "id": 1,
           "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
           "targets": [{"expr": "count(count by (namespace, pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"$pod\",container!=\"POD\",container!=\"\"}))", "refId": "A"}],
@@ -54,7 +54,7 @@ data:
         {
           "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
           "fieldConfig": {"defaults": {"unit": "cores"}, "overrides": []},
-          "gridPos": {"h": 8, "w": 12, "x": 6, "y": 0},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
           "id": 2,
           "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
           "targets": [{"expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",pod=~\"$pod\",container!=\"POD\",container!=\"\"}[5m]))", "legendFormat": "{{ "{{pod}}" }}", "refId": "A"}],
@@ -64,7 +64,7 @@ data:
         {
           "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
           "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []},
-          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
           "id": 3,
           "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
           "targets": [{"expr": "sum by (pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"$pod\",container!=\"POD\",container!=\"\"})", "legendFormat": "{{ "{{pod}}" }}", "refId": "A"}],
@@ -73,7 +73,7 @@ data:
         },
         {
           "datasource": {"type": "loki", "uid": "P8E80F9AEF21F6940"},
-          "gridPos": {"h": 12, "w": 24, "x": 0, "y": 16},
+          "gridPos": {"h": 12, "w": 24, "x": 0, "y": 12},
           "id": 4,
           "options": {"deduplication": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLines": false},
           "targets": [{"expr": "{namespace=~\"$namespace\",pod=~\"$pod\"}", "queryType": "range", "refId": "A"}],
@@ -82,7 +82,7 @@ data:
         }
       ],
       "refresh": "30s",
-      "schemaVersion": 39,
+      "schemaVersion": 42,
       "templating": {"list": [
         {"current": {"text": "All", "value": ["$__all"]}, "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"}, "definition": "label_values(container_memory_working_set_bytes, namespace)", "includeAll": true, "multi": true, "name": "namespace", "query": "label_values(container_memory_working_set_bytes, namespace)", "refresh": 1, "type": "query"},
         {"current": {"text": "All", "value": ["$__all"]}, "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"}, "definition": "label_values(container_memory_working_set_bytes{namespace=~\"$namespace\",container!=\"POD\",container!=\"\"}, pod)", "includeAll": true, "multi": true, "name": "pod", "query": "label_values(container_memory_working_set_bytes{namespace=~\"$namespace\",container!=\"POD\",container!=\"\"}, pod)", "refresh": 1, "type": "query"}
