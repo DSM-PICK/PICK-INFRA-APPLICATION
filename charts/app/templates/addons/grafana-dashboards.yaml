@@ -93,5 +93,80 @@ data:
       "uid": "kubernetes-pods-logs",
       "version": 1
     }
+  pick-prod-monitoring.json: |-
+    {
+      "annotations": {"list": []},
+      "description": "PiCK PROD CORE HTTP 지표 모니터링",
+      "editable": true,
+      "graphTooltip": 0,
+      "panels": [
+        {
+          "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+          "fieldConfig": {"defaults": {}, "overrides": []},
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+          "id": 1,
+          "options": {"cellHeight": "sm", "showHeader": true},
+          "targets": [
+            {"editorMode": "code", "expr": "sort_desc(sum by (uri) (increase(http_server_requests_seconds_count{namespace=\"pick-prod\",app=\"pick-core-prod\",uri!~\"/actuator/.*\"}[$__range])))", "format": "table", "instant": true, "range": false, "refId": "A"},
+            {"editorMode": "code", "expr": "sum by (uri) (increase(http_server_requests_seconds_count{namespace=\"pick-prod\",app=\"pick-core-prod\",status=~\"5..\",uri!~\"/actuator/.*\"}[$__range]))", "format": "table", "instant": true, "range": false, "refId": "B"},
+            {"editorMode": "code", "expr": "histogram_quantile(0.95, sum by (le, uri) (rate(http_server_requests_seconds_bucket{namespace=\"pick-prod\",app=\"pick-core-prod\",uri!~\"/actuator/.*\"}[5m])))", "format": "table", "instant": true, "range": false, "refId": "C"}
+          ],
+          "transformations": [
+            {"id": "joinByField", "options": {"byField": "uri", "mode": "outer"}},
+            {"id": "organize", "options": {"excludeByName": {"Time 1": true, "Time 2": true, "Time 3": true}, "renameByName": {"Value #A": "호출 수", "Value #B": "5xx", "Value #C": "p95(초)"}}}
+          ],
+          "title": "엔드포인트 기준선",
+          "type": "table"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+          "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "id": 2,
+          "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+          "targets": [{"expr": "histogram_quantile(0.95, sum by (le, uri) (rate(http_server_requests_seconds_bucket{namespace=\"pick-prod\",app=\"pick-core-prod\",uri!~\"/actuator/.*\"}[5m])))", "legendFormat": "{{ "{{uri}}" }}", "refId": "A"}],
+          "title": "엔드포인트별 p95 응답시간",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+          "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "id": 3,
+          "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+          "targets": [{"expr": "sum by (uri) (increase(http_server_requests_seconds_count{namespace=\"pick-prod\",app=\"pick-core-prod\",status=~\"5..\",uri!~\"/actuator/.*\"}[1h]))", "legendFormat": "{{ "{{uri}}" }}", "refId": "A"}],
+          "title": "5xx 에러 수",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+          "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+          "id": 4,
+          "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+          "targets": [{"expr": "sum by (uri) (increase(http_server_requests_seconds_count{namespace=\"pick-prod\",app=\"pick-core-prod\",uri!~\"/actuator/.*\"}[24h]))", "legendFormat": "{{ "{{uri}}" }}", "refId": "A"}],
+          "title": "엔드포인트별 하루 총 호출 수",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+          "fieldConfig": {"defaults": {"unit": "reqps"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+          "id": 5,
+          "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+          "targets": [{"expr": "sum by (uri) (rate(http_server_requests_seconds_count{namespace=\"pick-prod\",app=\"pick-core-prod\",uri!~\"/actuator/.*\"}[5m]))", "legendFormat": "{{ "{{uri}}" }}", "refId": "A"}],
+          "title": "엔드포인트별 호출량",
+          "type": "timeseries"
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 42,
+      "tags": ["pick", "prod", "core"],
+      "time": {"from": "now-7d", "to": "now"},
+      "timezone": "browser",
+      "title": "pick-prod-monitoring",
+      "uid": "pick-prod-monitoring",
+      "version": 1
+    }
 {{- end }}
 {{- end }}
