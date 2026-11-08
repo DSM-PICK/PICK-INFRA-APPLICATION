@@ -80,5 +80,7 @@ addons:
       storageClassName: local-path
   - type: debezium
     name: pick-debezium-prod
-    storage: 5Gi
+    storage:
+      size: 5Gi
+      storageClassName: local-path
     bootstrap: pick-kafka-prod:9092
