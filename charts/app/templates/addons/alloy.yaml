@@ -1,0 +1,304 @@
+{{- range .Values.addons }}
+{{- if eq .type "alloy" }}
+{{- $name := include "addon.name" . }}
+{{- $image := default (dict) .image }}
+{{- $service := default (dict) .service }}
+{{- $port := default 12345 $service.port }}
+{{- $lokiURL := default "http://loki:3100/loki/api/v1/push" .lokiURL }}
+{{- $rbacName := printf "%s-%s" (include "project.namespace" $) $name | trunc 63 | trimSuffix "-" }}
+{{- $pv := default (dict) .pv }}
+{{- $pvName := printf "%s-%s-pv" (include "project.namespace" $) $name | trunc 63 | trimSuffix "-" }}
+{{- if $pv.hostPath }}
+---
+apiVersion: v1
+kind: PersistentVolume
+
+metadata:
+  name: {{ $pvName }}
+
+  labels:
+    {{- include "addon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: storage
+
+spec:
+  capacity:
+    storage: {{ include "addon.storageSize" . }}
+
+  accessModes:
+    - ReadWriteOnce
+
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: {{ default "manual" $pv.storageClassName }}
+
+  hostPath:
+    path: {{ $pv.hostPath }}
+    type: DirectoryOrCreate
+{{- end }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+
+metadata:
+  name: {{ $name }}-data
+  namespace: {{ include "project.namespace" $ }}
+
+  labels:
+    {{- include "addon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: storage
+
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if $pv.hostPath }}
+  storageClassName: {{ default "manual" $pv.storageClassName }}
+  volumeName: {{ $pvName }}
+  {{- else if and (kindIs "map" .storage) .storage.storageClassName }}
+  storageClassName: {{ .storage.storageClassName }}
+  {{- end }}
+
+  resources:
+    requests:
+      storage: {{ include "addon.storageSize" . }}
+---
+apiVersion: v1
+kind: ServiceAccount
+
+metadata:
+  name: {{ $name }}
+  namespace: {{ include "project.namespace" $ }}
+
+  labels:
+    {{- include "addon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: collector
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+
+metadata:
+  name: {{ $rbacName }}
+
+  labels:
+    {{- include "addon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: collector
+
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - pods/log
+      - namespaces
+      - events
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+
+metadata:
+  name: {{ $rbacName }}
+
+  labels:
+    {{- include "addon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: collector
+
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $rbacName }}
+
+subjects:
+  - kind: ServiceAccount
+    name: {{ $name }}
+    namespace: {{ include "project.namespace" $ }}
+---
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: {{ $name }}-config
+  namespace: {{ include "project.namespace" $ }}
+
+  labels:
+    {{- include "addon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: config
+
+data:
+  config.alloy: |
+    logging {
+      level  = "info"
+      format = "logfmt"
+    }
+
+    discovery.kubernetes "pods" {
+      role = "pod"
+    }
+
+    discovery.relabel "pods" {
+      targets = discovery.kubernetes.pods.targets
+
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        target_label  = "namespace"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_name"]
+        target_label  = "pod"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_name"]
+        target_label  = "container"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_node_name"]
+        target_label  = "node"
+      }
+    }
+
+    loki.source.kubernetes "pods" {
+      targets    = discovery.relabel.pods.output
+      forward_to = [loki.write.default.receiver]
+    }
+
+    loki.write "default" {
+      endpoint {
+        url = {{ $lokiURL | quote }}
+      }
+    }
+---
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: {{ include "addon.serviceName" . }}
+  namespace: {{ include "project.namespace" $ }}
+
+  labels:
+    {{- include "addon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: service
+
+spec:
+  type: ClusterIP
+
+  selector:
+    {{- include "addon.selectorLabels" . | nindent 4 }}
+
+  ports:
+    - name: http
+      port: {{ $port }}
+      targetPort: 12345
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: {{ $name }}
+  namespace: {{ include "project.namespace" $ }}
+
+  labels:
+    {{- include "addon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: collector
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      {{- include "addon.selectorLabels" . | nindent 6 }}
+
+  template:
+    metadata:
+      labels:
+        {{- include "addon.selectorLabels" . | nindent 8 }}
+
+    spec:
+      serviceAccountName: {{ $name }}
+
+      securityContext:
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+
+      {{- if $pv.hostPath }}
+      initContainers:
+        - name: fix-permissions
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - chown -R 65534:65534 /tmp/alloy
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: storage
+              mountPath: /tmp/alloy
+      {{- end }}
+
+      containers:
+        - name: alloy
+
+          image: "{{ default "grafana/alloy" $image.repository }}:{{ default "v1.21.3" $image.tag }}"
+          imagePullPolicy: {{ default "IfNotPresent" $image.pullPolicy }}
+
+          args:
+            - run
+            - /etc/alloy/config.alloy
+            - --storage.path=/tmp/alloy
+            - --server.http.listen-addr=0.0.0.0:12345
+            - --stability.level=generally-available
+
+          ports:
+            - containerPort: 12345
+              name: http
+
+          env:
+            - name: K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alloy
+
+            - name: storage
+              mountPath: /tmp/alloy
+
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 12345
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 12345
+            initialDelaySeconds: 30
+            periodSeconds: 20
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+      volumes:
+        - name: config
+          configMap:
+            name: {{ $name }}-config
+
+        - name: storage
+          persistentVolumeClaim:
+            claimName: {{ $name }}-data
+{{- end }}
+{{- end }}

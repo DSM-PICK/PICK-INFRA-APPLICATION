@@ -88,3 +88,31 @@ addons: []
 #    bootstrap: kafka.kafka.svc.cluster.local:9092
 #    storage:
 #      size: 5Gi
+#
+#  - type: grafana
+#    name: grafana
+#    storage: 2Gi
+#    secretName: grafana-admin
+#    rootURL: http://grafana.example.com
+#    lokiURL: http://loki:3100
+#    pv:
+#      hostPath: /var/lib/monitoring/grafana
+#    ingress:
+#      entryPoints:
+#        - web
+#      hosts:
+#        - grafana.example.com
+#
+#  - type: loki
+#    name: loki
+#    storage: 5Gi
+#    retention: 744h
+#    pv:
+#      hostPath: /var/lib/monitoring/loki
+#
+#  - type: alloy
+#    name: alloy
+#    storage: 1Gi
+#    lokiURL: http://loki:3100/loki/api/v1/push
+#    pv:
+#      hostPath: /var/lib/monitoring/alloy

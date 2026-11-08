@@ -1,0 +1,44 @@
+namespace: monitoring
+
+deployments: []
+
+addons:
+  - type: grafana
+    name: grafana
+    storage: 2Gi
+    secretName: grafana-admin
+    rootURL: http://grafana.dsmhs.kr
+    lokiURL: http://loki:3100
+    image:
+      repository: grafana/grafana
+      tag: "12.3.1"
+      pullPolicy: IfNotPresent
+    pv:
+      hostPath: /var/lib/pick/monitoring/grafana
+    ingress:
+      entryPoints:
+        - web
+      hosts:
+        - grafana.dsmhs.kr
+
+  - type: loki
+    name: loki
+    storage: 5Gi
+    retention: 744h
+    image:
+      repository: grafana/loki
+      tag: "3.6.16"
+      pullPolicy: IfNotPresent
+    pv:
+      hostPath: /var/lib/pick/monitoring/loki
+
+  - type: alloy
+    name: alloy
+    storage: 1Gi
+    lokiURL: http://loki:3100/loki/api/v1/push
+    image:
+      repository: grafana/alloy
+      tag: v1.21.3
+      pullPolicy: IfNotPresent
+    pv:
+      hostPath: /var/lib/pick/monitoring/alloy
