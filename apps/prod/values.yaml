@@ -12,8 +12,6 @@ deployments:
       targetPort: 8080
     metrics:
       enabled: true
-      port: 8080
-      path: /dsm-pick/actuator/prometheus
     ingress:
       entryPoints:
         - web

@@ -5,17 +5,7 @@
 {{- $port := default 80 $service.port }}
 {{- $secret := default (dict) .secret }}
 {{- $metrics := default (dict) .metrics }}
-{{- $podAnnotations := default (dict) .podAnnotations }}
-{{- if $metrics.enabled }}
-{{- $_ := set $podAnnotations "prometheus.io/scrape" "true" }}
-{{- $_ := set $podAnnotations "prometheus.io/port" (toString (default $port $metrics.port)) }}
-{{- $_ := set $podAnnotations "prometheus.io/path" (default "/metrics" $metrics.path) }}
-{{- end }}
-{{- if $metrics.nginx }}
-{{- $_ := set $podAnnotations "prometheus.io/scrape" "true" }}
-{{- $_ := set $podAnnotations "prometheus.io/port" "9113" }}
-{{- $_ := set $podAnnotations "prometheus.io/path" "/metrics" }}
-{{- end }}
+{{- $mainPortName := ternary "metrics-act" "http" (default false $metrics.enabled) }}
 {{- $nginxConfigName := printf "%s-nginx-stub" $name | trunc 63 | trimSuffix "-" }}
 {{- if $metrics.nginx }}
 ---
@@ -66,10 +56,6 @@ spec:
     metadata:
       labels:
         app: {{ $name }}
-      {{- with $podAnnotations }}
-      annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
 
     spec:
       {{- with $pullSecrets }}
@@ -83,7 +69,8 @@ spec:
           imagePullPolicy: {{ default "IfNotPresent" $image.pullPolicy }}
 
           ports:
-            - containerPort: {{ default $port $service.targetPort }}
+            - name: {{ $mainPortName }}
+              containerPort: {{ default $port $service.targetPort }}
 
           {{- if $metrics.nginx }}
           volumeMounts:
