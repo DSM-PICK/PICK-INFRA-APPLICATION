@@ -107,8 +107,8 @@ data:
           "id": 1,
           "options": {"cellHeight": "sm", "showHeader": true},
           "targets": [
-            {"editorMode": "code", "expr": "sort_desc(sum by (uri) (increase(http_server_requests_seconds_count{namespace=\"pick-prod\",app=\"pick-core-prod\",uri!~\"/actuator/.*\"}[$__range])))", "format": "table", "instant": true, "range": false, "refId": "A"},
-            {"editorMode": "code", "expr": "sum by (uri) (increase(http_server_requests_seconds_count{namespace=\"pick-prod\",app=\"pick-core-prod\",status=~\"5..\",uri!~\"/actuator/.*\"}[$__range]))", "format": "table", "instant": true, "range": false, "refId": "B"},
+            {"editorMode": "code", "expr": "sort_desc(round(sum by (uri) (increase(http_server_requests_seconds_count{namespace=\"pick-prod\",app=\"pick-core-prod\",uri!~\"/actuator/.*\"}[$__range]))))", "format": "table", "instant": true, "range": false, "refId": "A"},
+            {"editorMode": "code", "expr": "round(sum by (uri) (increase(http_server_requests_seconds_count{namespace=\"pick-prod\",app=\"pick-core-prod\",status=~\"5..\",uri!~\"/actuator/.*\"}[$__range])))", "format": "table", "instant": true, "range": false, "refId": "B"},
             {"editorMode": "code", "expr": "histogram_quantile(0.95, sum by (le, uri) (rate(http_server_requests_seconds_bucket{namespace=\"pick-prod\",app=\"pick-core-prod\",uri!~\"/actuator/.*\"}[5m])))", "format": "table", "instant": true, "range": false, "refId": "C"}
           ],
           "transformations": [
@@ -134,7 +134,7 @@ data:
           "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
           "id": 3,
           "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
-          "targets": [{"expr": "sum by (uri) (increase(http_server_requests_seconds_count{namespace=\"pick-prod\",app=\"pick-core-prod\",status=~\"5..\",uri!~\"/actuator/.*\"}[1h]))", "legendFormat": "{{ "{{uri}}" }}", "refId": "A"}],
+          "targets": [{"expr": "round(sum by (uri) (increase(http_server_requests_seconds_count{namespace=\"pick-prod\",app=\"pick-core-prod\",status=~\"5..\",uri!~\"/actuator/.*\"}[1h])))", "legendFormat": "{{ "{{uri}}" }}", "refId": "A"}],
           "title": "5xx 에러 수",
           "type": "timeseries"
         },
@@ -144,7 +144,7 @@ data:
           "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
           "id": 4,
           "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
-          "targets": [{"expr": "sum by (uri) (increase(http_server_requests_seconds_count{namespace=\"pick-prod\",app=\"pick-core-prod\",uri!~\"/actuator/.*\"}[24h]))", "legendFormat": "{{ "{{uri}}" }}", "refId": "A"}],
+          "targets": [{"expr": "round(sum by (uri) (increase(http_server_requests_seconds_count{namespace=\"pick-prod\",app=\"pick-core-prod\",uri!~\"/actuator/.*\"}[24h])))", "legendFormat": "{{ "{{uri}}" }}", "refId": "A"}],
           "title": "엔드포인트별 하루 총 호출 수",
           "type": "timeseries"
         },
