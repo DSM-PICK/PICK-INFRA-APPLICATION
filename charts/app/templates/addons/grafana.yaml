@@ -7,6 +7,7 @@
 {{- $port := default 3000 $service.port }}
 {{- $secretName := default (printf "%s-admin" $name) .secretName }}
 {{- $lokiURL := default "http://loki:3100" .lokiURL }}
+{{- $prometheusURL := default "http://prometheus:9090" .prometheusURL }}
 {{- $pv := default (dict) .pv }}
 {{- $pvName := printf "%s-%s-pv" (include "project.namespace" $) $name | trunc 63 | trimSuffix "-" }}
 {{- if $pv.hostPath }}
@@ -73,6 +74,16 @@ metadata:
     app.kubernetes.io/component: config
 
 data:
+  prometheus.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: {{ $prometheusURL | quote }}
+        isDefault: true
+        editable: false
+
   loki.yaml: |
     apiVersion: 1
     datasources:
@@ -80,7 +91,7 @@ data:
         type: loki
         access: proxy
         url: {{ $lokiURL | quote }}
-        isDefault: true
+        isDefault: false
         editable: false
 ---
 apiVersion: v1

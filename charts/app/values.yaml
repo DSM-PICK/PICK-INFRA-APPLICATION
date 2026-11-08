@@ -89,11 +89,19 @@ addons: []
 #    storage:
 #      size: 5Gi
 #
+#  - type: prometheus
+#    name: prometheus
+#    storage: 5Gi
+#    retention: 15d
+#    pv:
+#      hostPath: /var/lib/monitoring/prometheus
+#
 #  - type: grafana
 #    name: grafana
 #    storage: 2Gi
 #    secretName: grafana-admin
 #    rootURL: http://grafana.example.com
+#    prometheusURL: http://prometheus:9090
 #    lokiURL: http://loki:3100
 #    pv:
 #      hostPath: /var/lib/monitoring/grafana

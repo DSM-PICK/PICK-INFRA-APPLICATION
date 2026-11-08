@@ -8,6 +8,7 @@ addons:
     storage: 2Gi
     secretName: grafana-admin
     rootURL: http://pick-monitoring.dsmhs.kr
+    prometheusURL: http://prometheus:9090
     lokiURL: http://loki:3100
     image:
       repository: grafana/grafana
@@ -20,6 +21,17 @@ addons:
         - web
       hosts:
         - pick-monitoring.dsmhs.kr
+
+  - type: prometheus
+    name: prometheus
+    storage: 5Gi
+    retention: 15d
+    image:
+      repository: prom/prometheus
+      tag: v3.16.0
+      pullPolicy: IfNotPresent
+    pv:
+      hostPath: /var/lib/pick/monitoring/prometheus
 
   - type: loki
     name: loki

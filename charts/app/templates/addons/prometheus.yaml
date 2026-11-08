@@ -1,0 +1,365 @@
+{{- range .Values.addons }}
+{{- if eq .type "prometheus" }}
+{{- $name := include "addon.name" . }}
+{{- $image := default (dict) .image }}
+{{- $service := default (dict) .service }}
+{{- $port := default 9090 $service.port }}
+{{- $rbacName := printf "%s-%s" (include "project.namespace" $) $name | trunc 63 | trimSuffix "-" }}
+{{- $pv := default (dict) .pv }}
+{{- $pvName := printf "%s-%s-pv" (include "project.namespace" $) $name | trunc 63 | trimSuffix "-" }}
+{{- if $pv.hostPath }}
+---
+apiVersion: v1
+kind: PersistentVolume
+
+metadata:
+  name: {{ $pvName }}
+
+  labels:
+    {{- include "addon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: storage
+
+spec:
+  capacity:
+    storage: {{ include "addon.storageSize" . }}
+
+  accessModes:
+    - ReadWriteOnce
+
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: {{ default "manual" $pv.storageClassName }}
+
+  hostPath:
+    path: {{ $pv.hostPath }}
+    type: DirectoryOrCreate
+{{- end }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+
+metadata:
+  name: {{ $name }}-data
+  namespace: {{ include "project.namespace" $ }}
+
+  labels:
+    {{- include "addon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: storage
+
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if $pv.hostPath }}
+  storageClassName: {{ default "manual" $pv.storageClassName }}
+  volumeName: {{ $pvName }}
+  {{- else if and (kindIs "map" .storage) .storage.storageClassName }}
+  storageClassName: {{ .storage.storageClassName }}
+  {{- end }}
+
+  resources:
+    requests:
+      storage: {{ include "addon.storageSize" . }}
+---
+apiVersion: v1
+kind: ServiceAccount
+
+metadata:
+  name: {{ $name }}
+  namespace: {{ include "project.namespace" $ }}
+
+  labels:
+    {{- include "addon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metrics
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+
+metadata:
+  name: {{ $rbacName }}
+
+  labels:
+    {{- include "addon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metrics
+
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+      - nodes/metrics
+      - nodes/proxy
+      - services
+      - endpoints
+      - pods
+      - namespaces
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+
+  - nonResourceURLs:
+      - /metrics
+    verbs:
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+
+metadata:
+  name: {{ $rbacName }}
+
+  labels:
+    {{- include "addon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metrics
+
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $rbacName }}
+
+subjects:
+  - kind: ServiceAccount
+    name: {{ $name }}
+    namespace: {{ include "project.namespace" $ }}
+---
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: {{ $name }}-config
+  namespace: {{ include "project.namespace" $ }}
+
+  labels:
+    {{- include "addon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: config
+
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 30s
+      evaluation_interval: 30s
+
+    scrape_configs:
+      - job_name: prometheus
+        static_configs:
+          - targets:
+              - localhost:9090
+
+      - job_name: kubernetes-nodes
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        kubernetes_sd_configs:
+          - role: node
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/$1/proxy/metrics
+
+      - job_name: kubernetes-nodes-cadvisor
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        kubernetes_sd_configs:
+          - role: node
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/$1/proxy/metrics/cadvisor
+
+      - job_name: kubernetes-service-endpoints
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+            action: keep
+            regex: "true"
+          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scheme]
+            action: replace
+            target_label: __scheme__
+            regex: (https?)
+          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - action: labelmap
+            regex: __meta_kubernetes_service_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_service_name]
+            action: replace
+            target_label: service
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: pod
+
+      - job_name: kubernetes-pods
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: "true"
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: pod
+---
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: {{ include "addon.serviceName" . }}
+  namespace: {{ include "project.namespace" $ }}
+
+  labels:
+    {{- include "addon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: service
+
+spec:
+  type: ClusterIP
+
+  selector:
+    {{- include "addon.selectorLabels" . | nindent 4 }}
+
+  ports:
+    - name: http
+      port: {{ $port }}
+      targetPort: 9090
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: {{ $name }}
+  namespace: {{ include "project.namespace" $ }}
+
+  labels:
+    {{- include "addon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metrics
+
+spec:
+  replicas: 1
+
+  strategy:
+    type: Recreate
+
+  selector:
+    matchLabels:
+      {{- include "addon.selectorLabels" . | nindent 6 }}
+
+  template:
+    metadata:
+      labels:
+        {{- include "addon.selectorLabels" . | nindent 8 }}
+
+    spec:
+      serviceAccountName: {{ $name }}
+
+      securityContext:
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+
+      {{- if $pv.hostPath }}
+      initContainers:
+        - name: fix-permissions
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - chown -R 65534:65534 /prometheus
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: data
+              mountPath: /prometheus
+      {{- end }}
+
+      containers:
+        - name: prometheus
+
+          image: "{{ default "prom/prometheus" $image.repository }}:{{ default "v3.16.0" $image.tag }}"
+          imagePullPolicy: {{ default "IfNotPresent" $image.pullPolicy }}
+
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.path=/prometheus
+            - --storage.tsdb.retention.time={{ default "15d" .retention }}
+            - --web.enable-lifecycle
+
+          ports:
+            - containerPort: 9090
+              name: http
+
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+
+            - name: data
+              mountPath: /prometheus
+
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+            initialDelaySeconds: 30
+            periodSeconds: 20
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+
+      volumes:
+        - name: config
+          configMap:
+            name: {{ $name }}-config
+
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ $name }}-data
+{{- end }}
+{{- end }}
