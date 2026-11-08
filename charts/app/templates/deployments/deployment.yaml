@@ -4,6 +4,45 @@
 {{- $service := default (dict) .service }}
 {{- $port := default 80 $service.port }}
 {{- $secret := default (dict) .secret }}
+{{- $metrics := default (dict) .metrics }}
+{{- $podAnnotations := default (dict) .podAnnotations }}
+{{- if $metrics.enabled }}
+{{- $_ := set $podAnnotations "prometheus.io/scrape" "true" }}
+{{- $_ := set $podAnnotations "prometheus.io/port" (toString (default $port $metrics.port)) }}
+{{- $_ := set $podAnnotations "prometheus.io/path" (default "/metrics" $metrics.path) }}
+{{- end }}
+{{- if $metrics.nginx }}
+{{- $_ := set $podAnnotations "prometheus.io/scrape" "true" }}
+{{- $_ := set $podAnnotations "prometheus.io/port" "9113" }}
+{{- $_ := set $podAnnotations "prometheus.io/path" "/metrics" }}
+{{- end }}
+{{- $nginxConfigName := printf "%s-nginx-stub" $name | trunc 63 | trimSuffix "-" }}
+{{- if $metrics.nginx }}
+---
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: {{ $nginxConfigName }}
+  namespace: {{ include "project.namespace" $ }}
+
+  labels:
+    app: {{ $name }}
+
+data:
+  stub-status.conf: |
+    server {
+      listen 8081;
+      server_name _;
+
+      location /stub_status {
+        stub_status;
+        access_log off;
+        allow 127.0.0.1;
+        deny all;
+      }
+    }
+{{- end }}
 {{- $pullSecrets := default $.Values.imagePullSecrets .imagePullSecrets }}
 ---
 apiVersion: apps/v1
@@ -27,6 +66,10 @@ spec:
     metadata:
       labels:
         app: {{ $name }}
+      {{- with $podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
 
     spec:
       {{- with $pullSecrets }}
@@ -42,9 +85,35 @@ spec:
           ports:
             - containerPort: {{ default $port $service.targetPort }}
 
+          {{- if $metrics.nginx }}
+          volumeMounts:
+            - name: nginx-stub-status
+              mountPath: /etc/nginx/conf.d/stub-status.conf
+              subPath: stub-status.conf
+          {{- end }}
+
           {{- if $secret.name }}
           envFrom:
             - secretRef:
                 name: {{ $secret.name }}
           {{- end }}
+        {{- if $metrics.nginx }}
+        - name: nginx-exporter
+
+          image: nginx/nginx-prometheus-exporter:1.5.3
+          imagePullPolicy: IfNotPresent
+
+          args:
+            - --nginx.scrape-uri=http://127.0.0.1:8081/stub_status
+
+          ports:
+            - name: metrics
+              containerPort: 9113
+        {{- end }}
+      {{- if $metrics.nginx }}
+      volumes:
+        - name: nginx-stub-status
+          configMap:
+            name: {{ $nginxConfigName }}
+      {{- end }}
 {{- end }}

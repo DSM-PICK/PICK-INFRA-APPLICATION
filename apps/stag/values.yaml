@@ -10,6 +10,10 @@ deployments:
       type: ClusterIP
       port: 80
       targetPort: 8080
+    metrics:
+      enabled: true
+      port: 8080
+      path: /dsm-pick/actuator/prometheus
     ingress:
       entryPoints:
         - web
@@ -27,6 +31,8 @@ deployments:
       type: ClusterIP
       port: 80
       targetPort: 8080
+    metrics:
+      nginx: true
     ingress:
       entryPoints:
         - web
@@ -44,6 +50,8 @@ deployments:
       type: ClusterIP
       port: 80
       targetPort: 8080
+    metrics:
+      nginx: true
     ingress:
       entryPoints:
         - web
