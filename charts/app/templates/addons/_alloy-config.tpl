@@ -123,6 +123,13 @@ discovery.relabel "pods" {
     target_label  = "component"
     replacement   = "redis"
   }
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+    regex         = ".*debezium.*"
+    target_label  = "component"
+    replacement   = "debezium"
+  }
 }
 
 loki.source.kubernetes "pods" {
