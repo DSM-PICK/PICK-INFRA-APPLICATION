@@ -3,6 +3,13 @@ namespace: monitoring
 deployments: []
 
 addons:
+  - type: node-exporter
+    name: node-exporter
+    image:
+      repository: prom/node-exporter
+      tag: v1.8.2
+      pullPolicy: IfNotPresent
+
   - type: grafana
     name: grafana
     storage: 2Gi
