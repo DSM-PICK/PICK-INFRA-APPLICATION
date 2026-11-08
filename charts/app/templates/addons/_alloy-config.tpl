@@ -13,12 +13,6 @@ discovery.relabel "pods" {
 
   rule {
     source_labels = ["__meta_kubernetes_namespace"]
-    regex         = "pick-.*"
-    action        = "keep"
-  }
-
-  rule {
-    source_labels = ["__meta_kubernetes_namespace"]
     target_label  = "namespace"
   }
 

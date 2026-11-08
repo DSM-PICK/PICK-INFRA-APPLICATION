@@ -1,0 +1,97 @@
+{{- range .Values.addons }}
+{{- if eq .type "grafana" }}
+{{- $name := include "addon.name" . }}
+{{- $namespace := include "project.namespace" $ }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}-dashboard-provisioning
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "addon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: dashboard-config
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: Kubernetes
+        orgId: 1
+        folder: Kubernetes
+        folderUid: kubernetes
+        type: file
+        disableDeletion: true
+        updateIntervalSeconds: 30
+        allowUiUpdates: false
+        options:
+          path: /var/lib/grafana/dashboards
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}-dashboards
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "addon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: dashboard-config
+data:
+  kubernetes-pods-logs.json: |-
+    {
+      "annotations": {"list": []},
+      "editable": false,
+      "graphTooltip": 1,
+      "panels": [
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+          "gridPos": {"h": 5, "w": 6, "x": 0, "y": 0},
+          "id": 1,
+          "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+          "targets": [{"expr": "count(count by (namespace, pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"$pod\",container!=\"POD\",container!=\"\"}))", "refId": "A"}],
+          "title": "Pods",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {"defaults": {"unit": "cores"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 6, "y": 0},
+          "id": 2,
+          "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+          "targets": [{"expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",pod=~\"$pod\",container!=\"POD\",container!=\"\"}[5m]))", "legendFormat": "{{ "{{pod}}" }}", "refId": "A"}],
+          "title": "CPU Usage by Pod",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "id": 3,
+          "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+          "targets": [{"expr": "sum by (pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"$pod\",container!=\"POD\",container!=\"\"})", "legendFormat": "{{ "{{pod}}" }}", "refId": "A"}],
+          "title": "Memory Usage by Pod",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "loki", "uid": "loki"},
+          "gridPos": {"h": 12, "w": 24, "x": 0, "y": 16},
+          "id": 4,
+          "options": {"deduplication": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLines": false},
+          "targets": [{"expr": "{namespace=~\"$namespace\",pod=~\"$pod\"}", "queryType": "range", "refId": "A"}],
+          "title": "Pod Logs",
+          "type": "logs"
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "templating": {"list": [
+        {"current": {"text": "All", "value": ["$__all"]}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "definition": "label_values(container_memory_working_set_bytes, namespace)", "includeAll": true, "multi": true, "name": "namespace", "query": "label_values(container_memory_working_set_bytes, namespace)", "refresh": 1, "type": "query"},
+        {"current": {"text": "All", "value": ["$__all"]}, "datasource": {"type": "prometheus", "uid": "prometheus"}, "definition": "label_values(container_memory_working_set_bytes{namespace=~\"$namespace\",container!=\"POD\",container!=\"\"}, pod)", "includeAll": true, "multi": true, "name": "pod", "query": "label_values(container_memory_working_set_bytes{namespace=~\"$namespace\",container!=\"POD\",container!=\"\"}, pod)", "refresh": 1, "type": "query"}
+      ]},
+      "time": {"from": "now-1h", "to": "now"},
+      "timezone": "browser",
+      "title": "Kubernetes Pods & Logs",
+      "uid": "kubernetes-pods-logs",
+      "version": 1
+    }
+{{- end }}
+{{- end }}
