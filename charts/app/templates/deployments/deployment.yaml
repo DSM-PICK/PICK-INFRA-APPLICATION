@@ -84,6 +84,19 @@ spec:
             - secretRef:
                 name: {{ $secret.name }}
           {{- end }}
+
+          {{- if .resources }}
+          resources:
+            {{- toYaml .resources | nindent 12 }}
+          {{- else }}
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          {{- end }}
         {{- if $metrics.nginx }}
         - name: nginx-exporter
 
@@ -96,6 +109,14 @@ spec:
           ports:
             - name: metrics
               containerPort: 9113
+
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
         {{- end }}
       {{- if $metrics.nginx }}
       volumes:

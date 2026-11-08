@@ -90,12 +90,18 @@ spec:
               value: "PLAINTEXT://{{ include "addon.serviceName" . }}.{{ include "project.namespace" $ }}.svc.cluster.local:9092"
             - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
               value: "1"
+          {{- if .resources }}
+          resources:
+            {{- toYaml .resources | nindent 12 }}
+          {{- else }}
           resources:
             requests:
               cpu: 200m
-              memory: 2Gi
+              memory: 1Gi
             limits:
-              memory: 4Gi
+              cpu: 1
+              memory: 2Gi
+          {{- end }}
           volumeMounts:
             - name: data
               mountPath: /var/lib/kafka/data
@@ -114,12 +120,18 @@ spec:
               value: "/var/lib/zookeeper/data"
             - name: ZOOKEEPER_DATA_LOG_DIR
               value: "/var/lib/zookeeper/log"
+          {{- if $zookeeper.resources }}
+          resources:
+            {{- toYaml $zookeeper.resources | nindent 12 }}
+          {{- else }}
           resources:
             requests:
               cpu: 100m
-              memory: 512Mi
+              memory: 256Mi
             limits:
+              cpu: 500m
               memory: 512Mi
+          {{- end }}
           volumeMounts:
           - name: zookeeper-data
             mountPath: /var/lib/zookeeper

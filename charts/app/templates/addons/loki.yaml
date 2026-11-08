@@ -216,13 +216,18 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 20
 
+          {{- if .resources }}
+          resources:
+            {{- toYaml .resources | nindent 12 }}
+          {{- else }}
           resources:
             requests:
-              cpu: 100m
-              memory: 256Mi
+              cpu: 50m
+              memory: 128Mi
             limits:
-              cpu: 500m
-              memory: 1Gi
+              cpu: 300m
+              memory: 512Mi
+          {{- end }}
 
       volumes:
         - name: data

@@ -100,6 +100,19 @@ spec:
                   name: {{ $secretName }}
                   key: mysql-root-password
 
+          {{- if .resources }}
+          resources:
+            {{- toYaml .resources | nindent 12 }}
+          {{- else }}
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          {{- end }}
+
           volumeMounts:
             - name: data
               mountPath: /var/lib/mysql

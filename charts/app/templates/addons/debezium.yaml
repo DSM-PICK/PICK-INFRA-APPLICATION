@@ -138,13 +138,18 @@ spec:
             - name: LOG_LEVEL
               value: "INFO"
 
+          {{- if .resources }}
+          resources:
+            {{- toYaml .resources | nindent 12 }}
+          {{- else }}
           resources:
             requests:
               cpu: 200m
-              memory: 1Gi
+              memory: 512Mi
             limits:
               cpu: 1
-              memory: 2Gi
+              memory: 1536Mi
+          {{- end }}
 
           livenessProbe:
             httpGet:
