@@ -95,7 +95,7 @@ discovery.relabel "pods" {
     replacement   = "cdc"
   }
 
-  # Stable workload label for dashboards. Unlike pod, this survives pod recreation.
+  // Stable workload label for dashboards. Unlike pod, this survives pod recreation.
   rule {
     source_labels = ["__meta_kubernetes_pod_label_app"]
     regex         = "pick-core.*"
