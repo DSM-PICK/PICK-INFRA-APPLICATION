@@ -68,7 +68,9 @@ addons:
     storage: 1Gi
   - type: kafka
     name: pick-kafka-stag
-    storage: 2Gi
+    storage:
+      size: 2Gi
+      storageClassName: local-path
   - type: debezium
     name: pick-debezium-stag
     storage: 5Gi

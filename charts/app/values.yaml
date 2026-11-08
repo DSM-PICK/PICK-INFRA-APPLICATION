@@ -83,7 +83,9 @@ addons: []
 #
 #  - type: kafka
 #    name: kafka
-#    storage: 10Gi
+#    storage:
+#      size: 10Gi
+#      storageClassName: durable-storage
 #
 #  - type: debezium
 #    name: debezium

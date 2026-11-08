@@ -27,6 +27,9 @@ kind: PersistentVolumeClaim
 metadata:
   name: {{ include "addon.name" . }}-data
   namespace: {{ include "project.namespace" $ }}
+  annotations:
+    helm.sh/resource-policy: keep
+    argocd.argoproj.io/sync-options: Delete=false
   labels:
     {{- include "addon.labels" . | nindent 4 }}
     app.kubernetes.io/component: storage
@@ -45,12 +48,18 @@ kind: PersistentVolumeClaim
 metadata:
   name: {{ include "addon.name" . }}-zookeeper-data
   namespace: {{ include "project.namespace" $ }}
+  annotations:
+    helm.sh/resource-policy: keep
+    argocd.argoproj.io/sync-options: Delete=false
   labels:
     {{- include "addon.labels" . | nindent 4 }}
     app.kubernetes.io/component: storage
 spec:
   accessModes:
     - ReadWriteOnce
+  {{- if and (kindIs "map" .storage) .storage.storageClassName }}
+  storageClassName: {{ .storage.storageClassName }}
+  {{- end }}
   resources:
     requests:
       storage: 2Gi
