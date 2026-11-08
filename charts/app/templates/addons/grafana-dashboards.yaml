@@ -168,5 +168,35 @@ data:
       "uid": "pick-prod-monitoring",
       "version": 1
     }
+  workload-logs.json: |-
+    {
+      "annotations": {"list": []},
+      "editable": true,
+      "graphTooltip": 1,
+      "panels": [
+        {
+          "datasource": {"type": "loki", "uid": "P8E80F9AEF21F6940"},
+          "description": "Pod 이름이 바뀌어도 namespace와 workload component 기준으로 계속 조회합니다.",
+          "gridPos": {"h": 20, "w": 24, "x": 0, "y": 0},
+          "id": 1,
+          "options": {"deduplication": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": true, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLines": false},
+          "targets": [{"expr": "{namespace=\"$namespace\",component=~\"$component\"}", "queryType": "range", "refId": "A"}],
+          "title": "${namespace} / ${component} 전체 로그",
+          "type": "logs"
+        }
+      ],
+      "refresh": "10s",
+      "schemaVersion": 42,
+      "tags": ["pick", "logs", "prod", "stag"],
+      "templating": {"list": [
+        {"current": {"text": "pick-prod", "value": "pick-prod"}, "includeAll": false, "label": "환경", "name": "namespace", "options": [{"selected": true, "text": "pick-prod", "value": "pick-prod"}, {"selected": false, "text": "pick-stag", "value": "pick-stag"}], "query": "pick-prod,pick-stag", "type": "custom"},
+        {"allValue": ".*", "current": {"text": "All", "value": ["$__all"]}, "includeAll": true, "label": "컴포넌트", "multi": true, "name": "component", "options": [], "query": "core,admin,kafka,redis", "type": "custom"}
+      ]},
+      "time": {"from": "now-1h", "to": "now"},
+      "timezone": "browser",
+      "title": "PROD / STAG Workload Logs",
+      "uid": "workload-logs",
+      "version": 1
+    }
 {{- end }}
 {{- end }}

@@ -94,6 +94,35 @@ discovery.relabel "pods" {
     target_label  = "tier"
     replacement   = "cdc"
   }
+
+  # Stable workload label for dashboards. Unlike pod, this survives pod recreation.
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app"]
+    regex         = "pick-core.*"
+    target_label  = "component"
+    replacement   = "core"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app"]
+    regex         = "pick-admin.*"
+    target_label  = "component"
+    replacement   = "admin"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+    regex         = ".*kafka.*"
+    target_label  = "component"
+    replacement   = "kafka"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+    regex         = ".*redis.*"
+    target_label  = "component"
+    replacement   = "redis"
+  }
 }
 
 loki.source.kubernetes "pods" {
