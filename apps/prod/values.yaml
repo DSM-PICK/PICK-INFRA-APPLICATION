@@ -2,6 +2,13 @@ namespace: pick-prod
 deployments:
   - name: pick-core-prod
     replicas: 1
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 1Gi
     image:
       repository: sungjujjang/pick-core-prod
       tag: edf126d75671bc4e94051ffac0831e17ae8b559c

@@ -2,6 +2,13 @@ namespace: pick-stag
 deployments:
   - name: pick-core-stag
     replicas: 1
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 1Gi
     image:
       repository: sungjujjang/pick-core-stag
       tag: c6a9d14f1ca168791d23e7f72fcfc1a8d33cb488
