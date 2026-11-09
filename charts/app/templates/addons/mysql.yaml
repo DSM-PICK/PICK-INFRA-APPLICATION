@@ -94,6 +94,9 @@ spec:
                   name: {{ $secretName }}
                   key: mysql-password
 
+            - name: MYSQL_ALLOW_EMPTY_PASSWORD
+              value: "yes"
+
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
