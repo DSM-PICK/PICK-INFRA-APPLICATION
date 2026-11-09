@@ -144,20 +144,12 @@ spec:
           {{- else }}
           resources:
             requests:
-              cpu: 500m
+              cpu: 200m
               memory: 1Gi
             limits:
-              cpu: 2
-              memory: 3Gi
+              cpu: 1
+              memory: 2Gi
           {{- end }}
-
-          startupProbe:
-            httpGet:
-              path: /
-              port: 8083
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 30
 
           livenessProbe:
             httpGet:

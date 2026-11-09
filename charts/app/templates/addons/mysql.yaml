@@ -97,6 +97,9 @@ spec:
             - name: MYSQL_ALLOW_EMPTY_PASSWORD
               value: "yes"
 
+            - name: MYSQL_ROOT_HOST
+              value: "%"
+
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
