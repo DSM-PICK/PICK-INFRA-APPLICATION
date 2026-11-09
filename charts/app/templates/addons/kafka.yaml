@@ -1,8 +1,5 @@
 {{- range .Values.addons }}
 {{- if eq .type "kafka" }}
-{{- $image := default (dict) .image }}
-{{- $zookeeper := default (dict) .zookeeper }}
-{{- $zookeeperImage := default (dict) $zookeeper.image }}
 ---
 apiVersion: v1
 kind: Service
@@ -27,9 +24,6 @@ kind: PersistentVolumeClaim
 metadata:
   name: {{ include "addon.name" . }}-data
   namespace: {{ include "project.namespace" $ }}
-  annotations:
-    helm.sh/resource-policy: keep
-    argocd.argoproj.io/sync-options: Delete=false
   labels:
     {{- include "addon.labels" . | nindent 4 }}
     app.kubernetes.io/component: storage
@@ -42,27 +36,6 @@ spec:
   resources:
     requests:
       storage: {{ include "addon.storageSize" . }}
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: {{ include "addon.name" . }}-zookeeper-data
-  namespace: {{ include "project.namespace" $ }}
-  annotations:
-    helm.sh/resource-policy: keep
-    argocd.argoproj.io/sync-options: Delete=false
-  labels:
-    {{- include "addon.labels" . | nindent 4 }}
-    app.kubernetes.io/component: storage
-spec:
-  accessModes:
-    - ReadWriteOnce
-  {{- if and (kindIs "map" .storage) .storage.storageClassName }}
-  storageClassName: {{ .storage.storageClassName }}
-  {{- end }}
-  resources:
-    requests:
-      storage: 2Gi
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -85,8 +58,7 @@ spec:
     spec:
       containers:
         - name: kafka
-          image: "{{ default "confluentinc/cp-kafka" $image.repository }}:{{ default "7.4.0" $image.tag }}"
-          imagePullPolicy: {{ default "IfNotPresent" $image.pullPolicy }}
+          image: confluentinc/cp-kafka:7.4.0
           ports:
             - containerPort: 9092
               name: kafka
@@ -99,24 +71,14 @@ spec:
               value: "PLAINTEXT://{{ include "addon.serviceName" . }}.{{ include "project.namespace" $ }}.svc.cluster.local:9092"
             - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
               value: "1"
-          {{- if .resources }}
-          resources:
-            {{- toYaml .resources | nindent 12 }}
-          {{- else }}
           resources:
             requests:
               cpu: 200m
-              memory: 1Gi
-            limits:
-              cpu: 1
               memory: 2Gi
-          {{- end }}
-          volumeMounts:
-            - name: data
-              mountPath: /var/lib/kafka/data
+            limits:
+              memory: 4Gi
         - name: zookeeper
-          image: "{{ default "confluentinc/cp-zookeeper" $zookeeperImage.repository }}:{{ default "7.4.0" $zookeeperImage.tag }}"
-          imagePullPolicy: {{ default "IfNotPresent" $zookeeperImage.pullPolicy }}
+          image: confluentinc/cp-zookeeper:7.4.0
           ports:
             - containerPort: 2181
               name: zookeeper
@@ -125,31 +87,18 @@ spec:
               value: "2181"
             - name: ZOOKEEPER_TICK_TIME
               value: "2000"
-            - name: ZOOKEEPER_DATA_DIR
-              value: "/var/lib/zookeeper/data"
-            - name: ZOOKEEPER_DATA_LOG_DIR
-              value: "/var/lib/zookeeper/log"
-          {{- if $zookeeper.resources }}
-          resources:
-            {{- toYaml $zookeeper.resources | nindent 12 }}
-          {{- else }}
           resources:
             requests:
               cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 500m
               memory: 512Mi
-          {{- end }}
+            limits:
+              memory: 512Mi
           volumeMounts:
-          - name: zookeeper-data
-            mountPath: /var/lib/zookeeper
+            - name: data
+              mountPath: /var/lib/kafka/data
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: {{ include "addon.name" . }}-data
-        - name: zookeeper-data
-          persistentVolumeClaim:
-            claimName: {{ include "addon.name" . }}-zookeeper-data
 {{- end }}
 {{- end }}
