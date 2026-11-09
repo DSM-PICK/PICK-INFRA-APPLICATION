@@ -30,7 +30,7 @@ deployments:
     replicas: 1
     image:
       repository: sungjujjang/pick-admin-stag
-      tag: 8edbfd5e8aaec77ae3496b416d8963dc37598a08
+      tag: 8d77a9e518803da3d6cda1f9dc4c53a9416823b7
       pullPolicy: Always
     service:
       type: ClusterIP
